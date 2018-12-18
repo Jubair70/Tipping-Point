@@ -1,0 +1,251 @@
+    {% extends "base.html" %}
+{% block additional-headers %}
+    <link href="/static/css/bootstrap-datepicker.css" rel="stylesheet" type="text/css"/>
+<head>
+  <title>
+    {% block title %} Observation Journal report {% endblock %}
+  </title>
+</head>
+<style type="text/css">
+	.chart-main-container{
+        width: 550px;
+        height: 400px;
+        min-height: 200px;
+        float: center;
+        padding: 2px;
+        border: 2px rgb(89, 89, 89) double;
+
+       }
+       aside {
+       	float: right;
+       }
+
+     .grid-chart{
+      border: 2px rgb(89, 89, 89) double;
+      margin-bottom: 10px;
+     }
+
+    .sec_chart {
+        width: 30%;
+        margin-bottom: 20px;
+    }
+    .sec_chg_wise_case {
+        width: 90%;
+        margin-bottom: 20px;
+    }
+    .tb_chg_wise_case {
+            table-layout: fixed;
+            height: 287px !important;
+            border:2px solid !important;
+            width:800px !important;
+       }
+    .tb_chg_wise_case td {
+        border: 1px solid #dddddd !important;
+        text-align:center !important;
+        width: 30%;
+
+    }
+    .input-append input.datepicker{
+    	width: 30%;
+    }
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #chart-main-container-1 *, #chart-main-container-2 *, #chart-main-container-3 *, #chart-main-container-4 *, #chart-main-container-5 * {
+    visibility: visible;
+  }
+  #sec_chg_wise_case_1 *,#sec_chg_wise_case_2 *,#sec_chg_wise_case_2 *,#sec_chg_wise_case_4 * {
+    visibility: visible;
+  }
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid container__wide main">
+    <p><h2>{% if rpt_type == 'bd' %} BD {%endif%} {% if rpt_type == 'np' %} NP {%endif%} Observation Journal Report (Type of changes)</h2></p>
+</div>
+    {% if rpt_type == 'bd' %}
+	<div class="pngo_area span3" >
+        <label>Pngo Name</label>
+        <select id ="pngo_name" class="pngolist" onchange="populate_upzilla()">
+            <option value="">Select a Pngo</option>
+        </select>
+    </div>
+
+    <div class="upozilla_area span3" >
+                <label>Upazila</label>
+                <select id ="upozilla_name" class="upozillalist" onchange="populate_union()">
+                    <option value="">Select a Upzila</option>
+                </select>
+            </div>
+
+    <div class="union_area span3">
+        <label>Union</label>
+        <select id ="union_name" class="unionlist" onchange="populate_village()">
+            <option value="">Select a union</option>
+
+        </select>
+    </div>
+    <div class="village_type span3">
+        <label>Village type</label>
+        <select id ="village_type" class="">
+            <option value="">Select village type</option>
+            <option value="Primary">Primary</option>
+            <option value="Outreach">Outreach</option>
+
+        </select>
+    </div>
+    <div class="village_area span3">
+        <label>Village</label>
+        <select id ="village_name" class="">
+            <option value="">Select a village</option>
+
+        </select>
+    </div>
+    <div class="ff_scm span3">
+        <label>FF/SCM</label>
+        <input type="text" placeholder="FF/SCM" class="" name="ff_scm" id="ff_scm"/>
+    </div>
+    {%endif%}
+    <div class="date_area span4">
+      <div id="datetimepicker1" class="input-append date">
+         <label>Month Range</label>
+         <input type="text" placeholder="From" class="datepicker" name="start_date" id="start_date"/>
+         <input type="text" placeholder="To" class="datepicker" name="end_date" id="end_date"/>
+       </div>
+    </div>
+
+    <div class="submit span4" id="submit" style="margin-top: 27px; margin-left: -70px;">
+    {% if rpt_type == 'bd' %}
+        <input type="hidden" name="country" id="rpt_type" value="BD">
+    {%endif%}
+    {% if rpt_type == 'np' %}
+        <input type="hidden" name="country" id="rpt_type" value="NP">
+    {%endif%}
+        <button>Show</button>
+	<button class="print" id="print">Print</button>
+    </div>
+    <div class="span10"></div>
+
+<div class="row">
+<div class="span6">
+  <div class="container__wide main grid-chart" id="chart-main-container-2"></div>
+</div>
+<div class="span6">
+  <div class="container__wide main grid-chart" id="chart-main-container-3"></div>
+</div>
+</div>
+<div class="row">
+<div class="span6">
+  <div class="container__wide main grid-chart" id="chart-main-container-4"></div>
+</div>
+<div class="span6">
+  <div class="container__wide main grid-chart" id="chart-main-container-5"></div>
+  </div>
+</div>
+
+<section class="sec_chg_wise_case" id="sec_chg_wise_case_2">
+    <h3>Type of Changes by Boundary Partners</h3>
+    <a id="dlink"  style="display:none;"></a>
+    <input type="button" onclick="tableToExcel('change_table', 'Type of Changes by Boundary Partners', 'change.xls')" value="Export to Excel">
+    <table class="table table-striped table-bordered" id="change_table">
+  <tbody>
+    <tr>
+      <th colspan="2"></th>
+      <th>Frequency</th>
+      <th>Total</th>
+    </tr>
+    <tr>
+      <td rowspan="2">Type of change 1</td>
+      <td>Positive change</td>
+      <td id="Positive"></td>
+      <td rowspan="2" id="tp_1_total"></td>
+    </tr>
+    <tr>
+      <td>Negetive Change</td>
+      <td id="Negative"></td>
+    </tr>
+    <tr>
+      <td rowspan="2">Type of change 2</td>
+      <td>Expected</td>
+      <td id="Expected"></td>
+      <td rowspan="2" id="tp_2_total"></td>
+    </tr>
+    <tr>
+      <td>Unexpected</td>
+      <td id="Unexpected"></td>
+    </tr>
+    <tr>
+      <td rowspan="3">Type of change 3</td>
+      <td>Major Change</td>
+      <td id="Major"></td>
+      <td rowspan="3" id="tp_3_total"></td>
+    </tr>
+    <tr>
+      <td>Important Change</td>
+      <td id="Important"></td>
+    </tr>
+    <tr>
+      <td>Minor Change</td>
+      <td id="Minor"></td>
+    </tr>
+    <tr>
+      <td rowspan="3">TP contribution</td>
+      <td>0-20%</td>
+      <td id="0_20"></td>
+      <td rowspan="3" id="tp_con_total"></td>
+    </tr>
+    <tr>
+      <td>40%-60%</td>
+      <td id="40_60"></td>
+    </tr>
+    <tr>
+      <td>80%-100%</td>
+      <td id="80_100"></td>
+    </tr>
+  </tbody>
+</table>
+{#<a id="dlink"  style="display:none;"></a>#}
+</section>
+{% endblock %}
+{% block javascript %}
+    {{ block.super }}
+    <script type="text/javascript" src="/static/js/bootstrap-datepicker.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+
+  <script type="text/javascript" src="{{STATIC_URL}}js/observation_journal.js"></script>
+   <script type="text/javascript">
+    $("#submit").on('click', function(){
+            send_filter();
+        });
+
+    $("#print").on('click', function(){
+            window.print();
+        });
+
+   var change_data = {{ change_data|safe }};
+   var unexpected_chart_data = {{ unexpected_chart_data|safe }};
+   var positive_chart_data = {{ positive_chart_data|safe }};
+   var majorminor_chart_data = {{ majorminor_chart_data|safe }};
+   var contrib_chart_data = {{ contrib_chart_data|safe }};
+   var json = {{ filter_json|safe}};
+
+   //console.log(JSON.stringify(unexpected_chart_data));
+
+   populate_option('pngo_name',json);
+
+   $(document).ready(function() {
+      $('.datepicker').datepicker({
+                format: 'mm-dd-yyyy'
+      });
+      populateContribChartData(contrib_chart_data);
+      populateMajorMinorChartData(majorminor_chart_data);
+      populateExpectedChartData(unexpected_chart_data);
+      populatePositiveChartData(positive_chart_data);
+      populateChangeTableData(change_data);
+   });
+       </script>
+{% endblock %}

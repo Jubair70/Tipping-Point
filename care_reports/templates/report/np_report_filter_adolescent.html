@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block additional-headers %}
+    <link href="/static/css/bootstrap-datepicker.css" rel="stylesheet" type="text/css"/>
+<style type="text/css">
+@media screen {
+        div.divHeader {
+            display: none;
+        }
+    }
+@media print {
+    .divHeader {
+        display: inline;
+        visibility: visible;
+        /*position: relative;*/
+        bottom: 0;
+    }
+   
+  body * {
+    visibility: hidden;
+  }
+  .filter_elem {
+    visibility: hidden;
+    display: none; 
+  } 
+}
+
+  .header-bar__top-logo {
+   margin-top: 14px!important;
+    }
+ 
+</style>
+{% endblock %}
+{% block content %}
+        <div class="row filter_elem
+">                
+         <div class="span3">
+            <label>From</label>
+            <input type="text" placeholder="From" class="datepicker" name="start_date" id="start_date" style="height: 34px;"/>
+            
+    </div>
+    <div class="span2">
+        <label>To</label>
+            <input type="text" placeholder="To" class="datepicker" name="end_date" id="end_date" style="height: 34px;"/>
+    </div> 
+    <div class="span3" style="margin-left:100px;">
+        <label>Boundary Partner</label>
+        <select name="bp" id ="bp" style="height:34px;">
+            <option value="%">Select Boundary</option>
+            <option value="2">Boys</option>            
+            <option value="1">Girls</option>
+        </select>
+    </div>
+              
+</div>
+<div class="row filter_elem
+">
+    <div class="span3">
+    {% if rpt_type == 'bd' %}  
+        <input type="hidden" name="country" id="rpt_type" value="BD">
+    {%endif%}
+    {% if rpt_type == 'np' %}  
+        <input type="hidden" name="country" id="rpt_type" value="NP">
+    {%endif%}
+        <button class="submit" id="submit">Show</button>
+	<input type="button" onclick="tableToExcel('adolescentgirl-table', 'Attendance on other activities', 'journal_report.xls')" value="Export to Excel" style="margin-top:1em;">
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+   <script type="text/javascript" src="/static/js/bootstrap-datepicker.js"></script>
+
+    <link href="//datatables.net/download/build/nightly/jquery.dataTables.css" rel="stylesheet" type="text/css" />
+    <script src="//datatables.net/download/build/nightly/jquery.dataTables.js"></script>
+    <script src="//cdn.rawgit.com/ashl1/datatables-rowsgroup/v1.0.0/dataTables.rowsGroup.js"></script>
+
+   <script type="text/javascript">
+    $(function () {
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+        });
+
+    {% if filter_json  %}
+    var json = {{ filter_json | safe }}
+    {% endif %}
+    
+    $(document).ready(function () { 
+       // populate_option('pngo_name',json);
+
+        $("#submit").on('click', function(){
+            console.log('Clicked');
+            send_filter();
+            
+        });
+	$("#print").on('click', function(){
+            window.print();
+        });
+ 	var data = {{data_list | safe}};
+	//k = [''].concat(data[0]);
+        createTable(data);
+    });
+
+    function createTable(data){
+
+
+  var table = $('#adolescentgirl-table').DataTable({
+    columns: [
+        {
+            name: 'first', 
+            title: 'Name of PNGO',
+        },
+        {
+            
+            title: 'Month',
+        },
+        {
+            title: 'Activities planned',
+        },
+        {
+            title: 'Activities target',
+        },
+        {
+            title: 'Activities Achieved',
+        },
+    ],
+    data: data,
+    "paging":false,
+    "bLengthChange": false,
+    "bFilter": false,
+    "scrollX": true,
+    "aaSorting": [[ 0, "desc" ]],
+    rowsGroup: [// Always the array (!) of the column-selectors in specified order to which rows groupping is applied
+                // (column-selector could be any of specified in https://datatables.net/reference/type/column-selector)
+        'first:name',
+        0
+    ],
+    pageLength: '10',
+    });
+}
+
+    function getCurrentDate(){
+        var today = new Date();
+        var dd = today.getDate();
+        var mm = today.getMonth()+1; //January is 0!
+        var yyyy = today.getFullYear();
+
+        if(dd<10) {
+            dd='0'+dd
+        } 
+
+        if(mm<10) {
+            mm='0'+mm
+        } 
+
+        today = yyyy+'-'+mm+'-'+dd;
+        return today;
+    }
+
+   function send_filter(){
+   
+    var start_date = '2016-01-01';
+    var end_date = getCurrentDate();
+    var url = '/care-reports/np_outcome_jrnal_topic/';
+    var bp='%';
+  
+    if (document.getElementById('start_date') != null){
+        start_date = document.getElementById("start_date").value;
+        if (start_date === "")
+         start_date = '2016-01-01';
+    }
+    if (document.getElementById('end_date') != null){
+        end_date = document.getElementById("end_date").value;
+        if (end_date === "")
+         end_date = getCurrentDate();
+    }
+    if (document.getElementById('bp') != null){
+        bp = document.getElementById("bp").value;
+        if (bp === "")
+         bp='%';
+    }
+
+
+    
+    var rpt_type = document.getElementById("rpt_type").value;
+    if (rpt_type == 'NP'){
+        url = '/care-reports/np_outcome_jrnal_topic/'
+    }
+    var param_data = {            
+            'start_date': start_date,
+            'end_date': end_date,
+            'bp':bp
+        }
+        console.log(param_data);
+            $.ajax({
+                  url: url, // form action url
+                  type: 'POST', // form submit method get/post
+                  dataType: 'json', // request type html/json/xml 
+                  data: param_data,
+                  
+                success: function(result) {
+                   //console.log(result);
+                  var datatable = $('#adolescentgirl-table').dataTable().api();
+		  datatable.clear();
+		  datatable.rows.add(result.data_list);
+		  datatable.draw();
+                    }
+                });
+   }
+
+var tableToExcel = (function () {
+       var uri = 'data:application/vnd.ms-excel;base64,'
+       , template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>'
+       , base64 = function (s) { return window.btoa(unescape(encodeURIComponent(s))) }
+       , format = function (s, c) { return s.replace(/{(\w+)}/g, function (m, p) { return c[p]; }) }
+       return function (table, name, filename) {
+           console.log(table);
+           var $ct=$("#"+table).clone();           
+           if (!table.nodeType) table = document.getElementById(table)
+           
+           $ct.find('[style*="display: none"]').remove();
+
+           //if (!table.nodeType) table = $("#"+table).find('[style*="display: none"]').remove()
+           var ctx = { worksheet: name || 'Worksheet', table: $ct.html() }
+document.getElementById("dlink").href = uri + base64(format(template, ctx));
+           document.getElementById("dlink").download = filename;
+           document.getElementById("dlink").click();
+ }
+   })()
+    </script>
+{% endblock %}

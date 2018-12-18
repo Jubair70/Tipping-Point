@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+{% block additional-headers %}
+    <link href="/static/css/bootstrap-datepicker.css" rel="stylesheet" type="text/css"/>
+<head>
+  <title>
+    {% block title %} Staff Transformation report {% endblock %}
+  </title>
+</head>
+<style type="text/css">
+	.chart-main-container{
+        width: 550px;
+        height: 400px;
+        min-height: 200px;
+        float: center;
+        padding: 2px;
+        border: 2px rgb(89, 89, 89) double;
+
+       }
+       aside {
+       	float: right;
+       }
+       section{
+       	width: 30%;
+       }
+       .sec_staff_trans_table{
+        width: 90%;
+       }
+      .sortable th{
+  			font-family:Arial, sans-serif;
+  			font-size:14px;
+			font-weight:normal;
+			padding:10px 5px;
+			border: 1px solid #dddddd !important;
+			overflow:hidden;
+			
+			color:#fff;
+			background-color:#26ADE4;
+			text-align: center;
+		}
+     .sortable td {
+        border: 1px solid #dddddd !important;
+        text-align:center !important;
+        background-color: #A9BFC8 !important;
+    }
+    .input-append input.datepicker{
+    	width: 30%;
+    }
+
+
+    #blanket {
+      background-color:#111;
+      opacity: 0.65;
+      *background:none;
+      position:absolute;
+      z-index: 9001;
+      top:0px;
+      left:0px;
+      width:100%;
+    }
+
+    #popUpDiv {
+        /*position:absolute;
+        background-color: #A9BFC8;
+        width:400px;
+        height:200px;
+        border:5px solid #000;
+        z-index: 9002;*/
+
+	border: solid 1px black;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    padding: 10px;
+    background-color:#A9BFC8;
+    width: 400px;
+    margin-left: -200px;
+    z-index: 9002;
+    }
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #chart-main-container, #chart-main-container * {
+    visibility: visible;
+  }
+  #sec_staff_trans_table, #sec_staff_trans_table * {
+    visibility: visible;
+  }
+  #chart-main-container {
+    position: absolute;
+    left: 80px;
+    top: 10px;
+  }
+  #sec_staff_trans_table {
+    position: absolute;
+    left: 20px;
+    top: 500px;
+  }
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid container__wide main">
+<p><h2>{% if rpt_type == 'bd' %} BD {%endif%} {% if rpt_type == 'np' %} NP {%endif%} Staff Transformation Report</h2></p>
+</div>
+<aside>
+    <div class="pngo_area" >
+        <label>Pngo Name</label>
+        <select id ="pngo_name" class="pngolist" onchange="populate_upzilla()">
+            <option value="%">Select a Pngo</option>
+        </select>
+    </div>
+    {% if rpt_type == 'bd' %}
+    <div class="upozilla_area" >
+                <label>Upazila</label>
+                <select id ="upozilla_name" class="upozillalist" onchange="populate_union()">
+                    <option value="%">Select a Upzila</option>
+                </select>
+            </div>
+    
+    <div class="union_area" >
+        <label>Union</label>
+        <select id ="union_name" class="unionlist" onchange="populate_village()">
+            <option value="%">Select a union</option>
+            
+        </select>
+    </div>
+    <div class="village_area" >
+        <label>Village</label>
+        <select id ="village_name" class="villagelist">
+            <option value="%">Select a Village</option>
+        </select>
+    </div>
+    {%endif%}
+    <div class="date_area">
+      <div id="datetimepicker1" class="input-append date">
+         <label>Date Range</label>
+         <input type="text" placeholder="From" class="datepicker" name="start_date" id="start_date"/>
+         <input type="text" placeholder="To" class="datepicker" name="end_date" id="end_date"/>
+       </div>
+    </div>
+    
+    <div>
+    {% if rpt_type == 'bd' %}  
+        <input type="hidden" name="country" id="rpt_type" value="BD">
+    {%endif%}
+    {% if rpt_type == 'np' %}  
+        <input type="hidden" name="country" id="rpt_type" value="NP">
+    {%endif%}
+        <button class="submit" id="submit">Show</button>
+        <button class="print" id="print">Export</button>
+    </div>
+</aside>
+<section>
+	<div class="container__wide main chart-main-container" id="chart-main-container"></div>
+</section>
+
+<section class="sec_staff_trans_table" id="sec_staff_trans_table">
+    {% if staff_trans_table %}
+        {{ staff_trans_table | safe }}
+    {% endif %}
+</section>
+<!--POPUP-->    
+    
+    <div id="blanket" style="display:none;"></div>
+  <div id="popUpDiv" style="display:none;">
+  </div>  
+  
+<!-- / POPUP--> 
+{% endblock %}
+{% block javascript %}
+    {{ block.super }}
+    <script type="text/javascript" src="/static/js/bootstrap-datepicker.js"></script>
+    <script type="text/javascript" charset="utf-8" src="{{STATIC_URL}}js/highchartcreate.js"></script>
+
+	<script type="text/javascript" src="{{STATIC_URL}}js/highcharts/highcharts.js"></script>
+	<script src="{{STATIC_URL}}js/highcharts/modules/data.js"></script>
+   <script type="text/javascript">
+    $(function () {
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+        });
+    {% if filter_json  %}
+    var json = {{ filter_json | safe }} ;
+    {% endif %}
+    {% if trans_chart_data  %}
+    var chart_data = {{ trans_chart_data | safe }} ;
+    {% endif %}
+    {% if tb_data_dict  %}
+    var tb_data_json = {{ tb_data_dict | safe }} ;
+    {% endif %}
+
+    $(document).ready(function() {
+
+    	populate_option('pngo_name',json);
+
+       $("#submit").on('click', function(){
+            //console.log('Clicked');
+            send_filter();
+        });
+	$("#print").on('click', function(){
+            window.print();
+        });
+       //console.log(tb_data_json);
+
+        var pngo_name = '';
+        var upzilla_name = '';
+        var union_name = '';
+
+        if ( chart_data ){
+            populate_chart_data(chart_data);
+            //console.log(chart_data);
+        }
+
+        attachEvent();
+
+        //When the user clicks anywhere outside of the modal, close it
+        $("#popUpDiv").on('click', function(){
+            this.style.display = 'none';
+            var el = document.getElementById('blanket');
+            el.style.display = 'none';
+            //console.log(this.id);
+        });
+        
+    });
+
+    function attachEvent(){
+      $(".btn").on('click', function(){
+        //getPosition(this);
+            pop_details(this.id,tb_data_json);
+            //console.log(this.id);
+        });
+    }
+
+    function pop_details(details_id,data_json){
+      var cf_trans = 'No';
+      var cv_trans = 'No';
+      var cf_desc = '';
+      var cv_desc = '';
+      
+      for (var key in data_json){
+        if (key == details_id){
+
+          cf_trans = ((data_json[key]['cfTransformation'] =='1') ? 'Yes' : 'No');
+          cf_desc = ((typeof data_json[key]['cfChanges'] != 'undefined') ? data_json[key]['cfChanges'] : 'N/A');
+          
+          cv_trans = ((data_json[key]['cvTransformation'] =='1') ? 'Yes' : 'No');
+          cv_desc = ((typeof data_json[key]['cvChanges'] != 'undefined') ? data_json[key]['cvChanges'] : 'N/A');
+          
+          popup_text = '<table style="width: 90%;"  cellpadding = "3"><tbody><tr><td><b>Any CF transformation</td><td>'+cf_trans+'</td></tr><tr><td><b> If Yes, ( Description)</td><td>'+cf_desc+'</td></tr><tr><td><b>Any CV transformation  </td><td>'+cv_trans+'</td></tr><tr><td><b>If Yes, ( Description) </td><td>'+cv_desc+'</td></tr></tbody></table>';
+          var div = document.getElementById('popUpDiv');
+          div.innerHTML = popup_text;
+          var rectangle = getPosition(details_id);
+          popup('popUpDiv',event.pageX-600,event.pageY-100);   
+        }
+      }     
+    }
+
+    function populate_chart_data(data_json){ 
+    var json_data = {
+       columns:[
+                [null,'CV','CF'],
+                ['Yes',data_json.cv_yes,data_json.cf_yes],
+                ['No',data_json.cv_no,data_json.cf_no]
+              ]
+        };       
+      createNewChart('column','chart-main-container',json_data,'Staff Transformation Status of CV','','');
+    }
+
+    function populate_vdc(){
+        
+        pngo_name = document.getElementById("pngo_name").value;
+        //console.log(pngo_name);
+        populate_option('vdc_name',json[pngo_name]);
+        //console.log(json[pngo_name]);
+    }
+    
+    function populate_upzilla(){
+        
+        pngo_name = document.getElementById("pngo_name").value;
+        //console.log(pngo_name);
+        populate_option('upozilla_name',json[pngo_name]);
+        //console.log(json[pngo_name]);
+    }
+    function populate_union(){
+        //removeOptions('union_name');
+        upzilla_name = document.getElementById("upozilla_name").value;
+        //console.log(upzilla_name);
+        populate_option('union_name',json[pngo_name][upzilla_name]);
+    }
+    function populate_village(){
+        //removeOptions('village_name');
+        union_name = document.getElementById("union_name").value;
+       // console.log(json[pngo_name][upzilla_name][union_name]);
+        populate_option('village_name',json[pngo_name][upzilla_name][union_name]);
+    }
+
+    function populate_option(id,json_data){
+        removeOptions(id);
+        $.each(json_data, function(i, value) {
+            if(isArray(json_data)){
+                $('#'+id).append($('<option>').text(value).attr('value', value));    
+            }else{
+                $('#'+id).append($('<option>').text(i).attr('value', i));    
+            }
+            
+        });
+    }
+    function isArray(what) {
+        return Object.prototype.toString.call(what) === '[object Array]';
+    }
+
+    function removeOptions(elementID)
+    {
+        var selectbox = document.getElementById(elementID);
+        var i;
+        for(i=selectbox.options.length-1;i>0;i--)
+        {
+            selectbox.remove(i);
+        }
+    }
+
+    function getCurrentDate(){
+        var today = new Date();
+        var dd = today.getDate();
+        var mm = today.getMonth()+1; //January is 0!
+        var yyyy = today.getFullYear();
+
+        if(dd<10) {
+            dd='0'+dd
+        } 
+
+        if(mm<10) {
+            mm='0'+mm
+        } 
+
+        today = yyyy+'-'+mm+'-'+dd;
+        return today;
+    }
+
+    function send_filter(){
+    var pngo = '%';
+    var upzilla ='%';
+    var union = '%';
+    var village = '%';
+    var vdc = '%';
+    var start_date = '2016-01-01';
+    var end_date = getCurrentDate();
+    var status = '%';
+    var url = '/care-reports/bd_staff_trans/';
+    if (document.getElementById('pngo_name') != null){
+        pngo = document.getElementById("pngo_name").value;
+    }
+    if (document.getElementById('upozilla_name') != null){
+        upzilla = document.getElementById("upozilla_name").value;
+    }
+    if (document.getElementById('union_name') != null){
+        union = document.getElementById("union_name").value;
+    }
+    if (document.getElementById('village_name') != null){
+        village = document.getElementById("village_name").value;
+    }
+    if (document.getElementById('vdc_name') != null){
+        vdc = document.getElementById("vdc_name").value;
+    }
+    if (document.getElementById('start_date') != null){
+        start_date = document.getElementById("start_date").value;
+        if (start_date === "")
+         start_date = '2016-01-01';
+    }
+    if (document.getElementById('end_date') != null){
+        end_date = document.getElementById("end_date").value;
+        if (end_date === "")
+         end_date = getCurrentDate();
+    }
+    if (document.getElementById('status_list') != null){
+        status = document.getElementById("status_list").value;
+    }
+    
+    var rpt_type = document.getElementById("rpt_type").value;
+     if (rpt_type == 'NP'){
+         url = '/care-reports/bd_staff_trans/'
+     }
+    var param_data = {
+            'pngo': pngo,
+            'upzilla': upzilla,
+            'union': union,
+            'village': village,
+            'vdc': vdc,
+            'status':status,
+            'start_date': start_date,
+            'end_date': end_date
+        }
+        console.log(param_data);
+            $.ajax({
+                  url: url, // form action url
+                  type: 'POST', // form submit method get/post
+                  dataType: 'json', // request type html/json/xml 
+                  data: param_data,
+                  
+                success: function(result) {
+                   //console.log(result);
+                   document.getElementById("sec_staff_trans_table").innerHTML = result.staff_trans_table;
+                   if(result.hasOwnProperty("trans_chart_data")){
+                        populate_chart_data(result.trans_chart_data)
+                   }
+                   attachEvent();
+
+                   //console.log('result:'+ result);
+                    }
+                });
+   }
+
+    function toggle(div_id) {
+      var el = document.getElementById(div_id);
+      if ( el.style.display == 'none' ) { el.style.display = 'block';}
+      else {el.style.display = 'none';}
+    }
+    function blanket_size(popUpDivVar) {
+      if (typeof window.innerWidth != 'undefined') {
+        viewportheight = window.innerHeight;
+      } else {
+        viewportheight = document.documentElement.clientHeight;
+      }
+      if ((viewportheight > document.body.parentNode.scrollHeight) && (viewportheight > document.body.parentNode.clientHeight)) {
+        blanket_height = viewportheight;
+      } else {
+        if (document.body.parentNode.clientHeight > document.body.parentNode.scrollHeight) {
+          blanket_height = document.body.parentNode.clientHeight;
+        } else {
+          blanket_height = document.body.parentNode.scrollHeight;
+        }
+      }
+      var blanket = document.getElementById('blanket');
+      blanket.style.height = blanket_height + 'px';
+      var popUpDiv = document.getElementById(popUpDivVar);
+      popUpDiv_height=blanket_height/2-200;//200 is half popup's height
+      popUpDiv.style.top = popUpDiv_height + 'px';
+    }
+    function window_pos(popUpDivVar) {
+      if (typeof window.innerWidth != 'undefined') {
+        viewportwidth = window.innerHeight;
+      } else {
+        viewportwidth = document.documentElement.clientHeight;
+      }
+      if ((viewportwidth > document.body.parentNode.scrollWidth) && (viewportwidth > document.body.parentNode.clientWidth)) {
+        window_width = viewportwidth;
+      } else {
+        if (document.body.parentNode.clientWidth > document.body.parentNode.scrollWidth) {
+          window_width = document.body.parentNode.clientWidth;
+        } else {
+          window_width = document.body.parentNode.scrollWidth;
+        }
+      }
+      var popUpDiv = document.getElementById(popUpDivVar);
+      window_width=window_width/2-200;//200 is half popup's width
+      popUpDiv.style.left = window_width + 'px';
+    }
+    function popup(windowname,x,y) {
+      blanket_size(windowname);
+      //window_pos(windowname);
+      moveWin(windowname,x,y);
+      toggle('blanket');
+      toggle(windowname);   
+    }
+
+    function getPosition(name){
+      var popUpDiv = document.getElementById(name);
+      var rect = popUpDiv.getBoundingClientRect();
+      //console.log(rect.top, rect.right, rect.bottom, rect.left);
+      return rect;
+  
+    }
+    function moveWin(winobj,x_pos,y_pos) {
+      var popUpDiv = document.getElementById(winobj);
+      popUpDiv.style.position = "absolute";
+      popUpDiv.style.left = x_pos+'px';
+      popUpDiv.style.top = y_pos+'px';
+      // popUpDiv.moveTo(x, y);
+      // popUpDiv.focus();
+    }
+    </script>
+{% endblock %}

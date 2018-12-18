@@ -1,0 +1,42 @@
+{% block additional-headers %}
+    <link href="/static/css/bootstrap-datepicker.css" rel="stylesheet" type="text/css"/>
+<head>
+  <title>
+    {% block title %} Attendance on Other Activities {% endblock %}
+  </title>
+</head>
+<style type="text/css">
+.sortable th{
+            font-family:Arial, sans-serif;
+            font-size:14px;
+            font-weight:normal;
+            padding:10px 5px;
+            border: 1px solid #dddddd !important;
+            overflow:hidden;
+            
+            color:#fff;
+            background-color:#26ADE4;
+            text-align: center;
+        }
+     .sortable td {
+        border: 1px solid #dddddd !important;
+        text-align:center !important;
+        background-color: #A9BFC8 !important;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid container__wide main">
+<p><h2>{% if rpt_type == 'bd' %} BD {%endif%} {% if rpt_type == 'np' %} NP {%endif%} Attendance on Other Activities</h2></p>
+</div>
+	{% include "report_filter_others.html" %}
+
+<div class="container-fluid container__wide main" id="div_other_tab">
+	{% if others_table %}
+	    {{others_table | safe }}
+	{% endif %}
+
+</div>
+<a id="dlink"  style="display:none;"></a>
+
+{% endblock %}

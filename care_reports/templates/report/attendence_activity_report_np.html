@@ -1,0 +1,95 @@
+{% block additional-headers %}
+    <link href="/static/css/bootstrap-datepicker.css" rel="stylesheet" type="text/css"/>
+<head>
+  <title>
+    {% block title %} Average attendance from main session and sub-activity {% endblock %}
+  </title>
+</head>
+<style type="text/css">
+.sortable th{
+            font-family:Arial, sans-serif;
+            font-size:14px;
+            font-weight:normal;
+            padding:10px 5px;
+            border: 1px solid #dddddd !important;
+            overflow:hidden;
+            
+            color:#fff;
+            background-color:#26ADE4;
+            text-align: center;
+
+        }
+     .sortable td {
+        border: 1px solid #dddddd !important;
+        text-align:center !important;
+        background-color: #A9BFC8 !important;
+    }
+ .sec_chg_wise_case {
+        width: 90%;
+    }
+    .tb_chg_wise_case {
+            table-layout: fixed;
+            height: 110px !important;
+            border:2px solid !important;
+            width:400px !important;
+       }
+    .tb_chg_wise_case td {
+        border: 1px solid #dddddd !important;
+        text-align:center !important;
+        width: 40%;
+       
+    }
+
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid container__wide main">
+<p><h2>{% if rpt_type == 'bd' %} BD {%endif%} {% if rpt_type == 'np' %} Nepal {%endif%} Average attendance from main session and sub-activity </h2></p>
+</div>
+	{% include "report_filter_np.html" %}
+
+<div class="container-fluid container__wide main" id="div_attendence_tab" >
+<div id="loading"> </div>
+<h4>Table1: Average attendance from main session and sub-activity</h4>
+    <table id="attendence-table" class="table table-bordered">
+        <thead>
+             <tr>
+                <th rowspan="2" id="village" style="text-align:center"> <b>VDC</b></th>                
+                <th colspan="6" id="main_act" style="text-align:center"><b>Main activity</b></th>                
+             </tr>
+	 <tr>
+                <td rowspan="1" id="age_10"><b>Age category<br/>(10-12)</b></td>
+                <td rowspan="1" id="age_13"><b>Age category<br/>(13-15)</b></td>
+                <td rowspan="1" id="age_16"><b>Age category<br/>(16-18)</b></td>
+                <td rowspan="1" id="age_16"><b>Age category<br/>(19-24)</b></td>
+                <td rowspan="1" id="age_total"><b>Total Average</b></td>             
+                <td rowspan="1" id="age_total"><b>Activities</b></td>
+             </tr>
+	<thead>
+<tbody>
+
+  	
+  </tbody>
+    </table>
+<a id="dlink"  style="display:none;"></a>
+</div>
+{% endblock %}
+
+{% block javascript %}
+   <script type="text/javascript">
+	 $(document).ready(function () { 
+        $('#attendence-table').find('tbody').html('');	
+	    var tr;
+	    var json = {{data_list | safe}};	
+	    for (var i = 0; i < json.length; i++) {
+        	tr = $('<tr></tr>');
+		for (var j = 0; j < json[i].length; j++) {
+	           tr.append("<td>" + json[i][j] + "</td>");
+		}        	
+        $('#attendence-table').find('tbody').append(tr);
+	}
+    });
+  </script>
+
+{% endblock %}
+

@@ -1,0 +1,57 @@
+{% block additional-headers %}
+    <link href="/static/css/bootstrap-datepicker.css" rel="stylesheet" type="text/css"/>
+<head>
+  <title>
+    {% block title %} List of activities of other activities by month {% endblock %}
+  </title>
+</head>
+<style type="text/css">
+.sortable th{
+            font-family:Arial, sans-serif;
+            font-size:14px;
+            font-weight:normal;
+            padding:10px 5px;
+            border: 1px solid #dddddd !important;
+            overflow:hidden;
+            
+            color:#fff;
+            background-color:#26ADE4;
+            text-align: center;
+        }
+     .sortable td {
+        border: 1px solid #dddddd !important;
+        text-align:center !important;
+        background-color: #A9BFC8 !important;
+    }
+ .sec_chg_wise_case {
+        width: 90%;
+    }
+    .tb_chg_wise_case {
+            table-layout: fixed;
+            height: 110px !important;
+            border:2px solid !important;
+            width:400px !important;
+       }
+    .tb_chg_wise_case td {
+        border: 1px solid #dddddd !important;
+        text-align:center !important;
+        width: 40%;
+       
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid container__wide main">
+<p><h2>{% if rpt_type == 'bd' %} BD {%endif%} {% if rpt_type == 'np' %} NP {%endif%} List of activities of other activities by month</h2></p>
+</div>
+	{% include "report_filter_outcome_others.html" %}
+
+<div class="container-fluid container__wide main" id="div_attendence_tab">
+<h4>Table1: Average attendance from main session and sub-activity</h4>
+     <table id="outcome-others-table" class="table table-bordered" style="overflow-y:scroll;">
+      </table>
+<a id="dlink"  style="display:none;"></a>
+</div>
+{% endblock %}
+
+ 

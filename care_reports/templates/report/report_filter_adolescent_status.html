@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% block additional-headers %}
+    <link href="/static/css/bootstrap-datepicker.css" rel="stylesheet" type="text/css"/>
+<style type="text/css">
+@media screen {
+        div.divHeader {
+            display: none;
+        }
+    }
+@media print {
+    .divHeader {
+        display: inline;
+        visibility: visible;
+        /*position: relative;*/
+        bottom: 0;
+    }
+   
+  body * {
+    visibility: hidden;
+  }
+  .filter_elem {
+    visibility: hidden;
+    display: none; 
+  }
+  #div_other_tab * {
+    /*position: relative;*/
+    visibility: visible;
+  }
+ 
+   
+}
+
+.header-bar__top-logo {
+   margin-top: 14px!important;
+    }
+ 
+</style>
+{% endblock %}
+{% block content %}
+
+
+        <div class="row" style="margin-left: 20px">
+            
+            {% if rpt_type == 'bd' %}
+                <div class="span3">
+                    <label>PNGO Name</label>
+                    <select id ="pngo_name" class="pngolist" onchange="populate_upzilla()">
+                        <option value="%">Select a Pngo</option>
+                    </select>
+                </div>
+                <div class="span3" >
+                    <label>Upazila</label>
+                    <select id ="upozilla_name" class="upozillalist" onchange="populate_union()">
+                        <option value="%">Select a Upzila</option>
+                    </select>
+                </div>
+            {%endif%}
+            {% if rpt_type == 'np' %}
+                <div class="span3">
+                    <label>PNGO Name</label>
+                    <select id="pngo_name" class="pngolist" onchange="populate_vdc()">
+                        <option value="%">Select a PNGO</option>
+                    </select>
+                </div>
+                <div class="span3">
+                    <label>VDC</label>
+                    <select id="vdc_name" class="vdclist">
+                        <option value="%">Select a VDC</option>
+                    </select>
+                </div>
+                <div class="span3">
+                    <label>From</label>
+                    <input placeholder="From" class="datepicker" name="start_date" id="start_date"/>
+                </div>
+                <div class="span3">
+                    <label>To</label>
+                    <input placeholder="To" class="datepicker" name="end_date" id="end_date"/>
+                </div>
+            {%endif%}
+	    {% if rpt_type == 'bd' %}  
+            <div class="span3" >
+                <label>Union</label>
+                <select id ="union_name" class="unionlist" onchange="populate_village()">
+                    <option value="%">Select a Union</option>
+                </select>
+            </div>
+          {%endif%}
+        </div>
+        <div class="row filter_elem">
+        {% if rpt_type == 'bd' %}  
+            
+            <div class="span3" >
+                <label>Village</label>
+                <select id ="village_name" class="villagelist">
+                    <option value="%">Select Village</option>
+                    {% for submitter in submitted_by %}
+                    <option value="{{submitter}}">{{submitter}}</option>
+                    {% endfor%}
+                </select>
+            </div>
+
+
+        {%endif%}
+
+
+        </div>
+
+
+<div class="row filter_elem">
+    <div class="span3">
+    {% if rpt_type == 'bd' %}
+        <input type="hidden" name="country" id="rpt_type" value="BD">
+    {%endif%}
+    {% if rpt_type == 'np' %}
+        <input type="hidden" name="country" id="rpt_type" value="NP">
+    {%endif%}
+        <button class="submit" id="submit" style="margin-left:3em;margin-top: 1px;em;" style="">Show</button>
+        <input type="button" onclick="tableToExcel('sortable', 'Change status of adolescents', 'adolescents_status.xls')" value="Export to Excel" style="margin-top:1em;">
+    </div>
+</div>
+    <br>
+    <div id="container" style="min-width: 310px; height: 400px; margin-left: 20px"></div>
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+   <script type="text/javascript" src="/static/js/bootstrap-datepicker.js"></script>
+   <script type="text/javascript">
+
+   var girls = {{ girls |safe }};
+   var boys = {{ boys| safe }};
+        chart(girls,boys);
+
+       function chart(girls,boys) {
+           Highcharts.chart('container', {
+               chart: {
+                   type: 'column'
+               },
+               title: {
+                   text: 'Girls/Boys Status Change'
+               },
+
+               xAxis: {
+                   categories: [
+                       'Unmarried to married',
+                       'Out of School to In School',
+                       'In School to Drop out',
+                       'Not Gauna to Gauna',
+                       'Others',
+                       'Added New',
+                       'Group left'
+                   ],
+                   crosshair: true
+               },
+               yAxis: {
+                   min: 0,
+                   title: {
+                       text: 'Count'
+                   }
+               },
+{#               tooltip: {#}
+{#                   headerFormat: '<span style="font-size:10px">{point.key}</span><table>',#}
+{#                   pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +#}
+{#                   '<td style="padding:0"><b>{point.y:.1f} mm</b></td></tr>',#}
+{#                   footerFormat: '</table>',#}
+{#                   shared: true,#}
+{#                   useHTML: true#}
+{#               },#}
+               plotOptions: {
+                   column: {
+                       pointPadding: 0.2,
+                       borderWidth: 0
+                   }
+               },
+               series: [{
+                   name: 'Girls',
+                   data: girls
+
+               }, {
+                   name: 'Boys',
+                   data: boys
+
+               }]
+           });
+
+       }
+
+
+
+
+
+
+    $(function () {
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+        });
+
+    {% if filter_json  %}
+    var json = {{ filter_json | safe }}
+    {% endif %}
+    
+    $(document).ready(function () { 
+        populate_option('pngo_name',json);
+
+        $("#submit").on('click', function(){
+            console.log('Clicked');
+            send_filter();
+            
+        });
+	$("#export").on('click', function(){
+            //window.print();
+	    send_filter_export();
+        });
+    });
+
+
+    var pngo_name = '';
+    var upzilla_name = '';
+    var union_name = '';
+
+    function populate_vdc(){
+        
+        pngo_name = document.getElementById("pngo_name").value;
+        //console.log(pngo_name);
+        if(pngo_name!='%')
+    populate_option('vdc_name', json[pngo_name]);
+    else removeOptions('vdc_name');
+
+        //console.log(json[pngo_name]);
+    }
+    
+    function populate_upzilla(){
+        
+        pngo_name = document.getElementById("pngo_name").value;
+        console.log(pngo_name);
+        if(pngo_name)
+    populate_option('upozilla_name', json[pngo_name]);
+    else removeOptions('upozilla_name');
+
+        //console.log(json[pngo_name]);
+    }
+    function populate_union(){
+        //removeOptions('union_name');
+        upzilla_name = document.getElementById("upozilla_name").value;
+        console.log(upzilla_name);
+        populate_option('union_name',json[pngo_name][upzilla_name]);
+    }
+    function populate_village(){
+        //removeOptions('village_name');
+        union_name = document.getElementById("union_name").value;
+       // console.log(json[pngo_name][upzilla_name][union_name]);
+        populate_option('village_name',json[pngo_name][upzilla_name][union_name]);
+    }
+
+    function populate_option(id,json_data){
+        removeOptions(id);
+        $.each(json_data, function(i, value) {
+            if(isArray(json_data)){
+                $('#'+id).append($('<option>').text(value).attr('value', value));    
+            }else{
+                $('#'+id).append($('<option>').text(i).attr('value', i));    
+            }
+            
+        });
+    }
+
+    function isArray(what) {
+        return Object.prototype.toString.call(what) === '[object Array]';
+    }
+
+    function removeOptions(elementID)
+    {
+        var selectbox = document.getElementById(elementID);
+        var i;
+        for(i=selectbox.options.length-1;i>0;i--)
+        {
+            selectbox.remove(i);
+        }
+    }
+
+    function getCurrentDate(){
+        var today = new Date();
+        var dd = today.getDate();
+        var mm = today.getMonth()+1; //January is 0!
+        var yyyy = today.getFullYear();
+
+        if(dd<10) {
+            dd='0'+dd
+        } 
+
+        if(mm<10) {
+            mm='0'+mm
+        } 
+
+        today = yyyy+'-'+mm+'-'+dd;
+        return today;
+    }
+
+   function send_filter(){
+    var pngo = '%';
+    var upzilla ='%';
+    var union = '%';
+    var village = '%';
+    var vdc = '%';
+    var rpt_type = '';
+    var start_date = '2016-01-01';
+    var end_date = getCurrentDate();
+    var url = '/care-reports/bd_adolescents_status/';
+	
+    if (document.getElementById('pngo_name') != null){
+        pngo = document.getElementById("pngo_name").value;
+    }
+    if (document.getElementById('upozilla_name') != null){
+        upzilla = document.getElementById("upozilla_name").value;
+    }
+    if (document.getElementById('union_name') != null){
+        union = document.getElementById("union_name").value;
+    }
+  
+    if (document.getElementById('village_name') != null){
+        village = document.getElementById("village_name").value;
+    }
+    if (document.getElementById('vdc_name') != null){
+        vdc = document.getElementById("vdc_name").value;
+    }
+ 
+    if (document.getElementById('start_date') != null){
+        start_date = document.getElementById("start_date").value;
+        if (start_date === "")
+         start_date = '2016-01-01';
+    }
+    if (document.getElementById('end_date') != null){
+        end_date = document.getElementById("end_date").value;
+        if (end_date === "")
+         end_date = getCurrentDate();
+    }
+     if (document.getElementById('rpt_type') != null){
+    	rpt_type = document.getElementById("rpt_type").value;
+    }
+    if (rpt_type == 'BD'){
+        url = '/care-reports/bd_adolescents_status/'
+    }
+    else {
+        url = '/care-reports/np_adolescents_status/'
+    }
+    console.log()
+    var param_data = {
+            'pngo': pngo,
+            'upzilla': upzilla,
+            'union': union,
+            'village': village,
+            'vdc': vdc,	  
+            'start_date': start_date,
+            'end_date': end_date
+        }
+      console.log(param_data);
+            $.ajax({
+                  url: url, // form action url
+                  type: 'POST', // form submit method get/post
+                  dataType: 'json', // request type html/json/xml 
+                  data: param_data,
+                  
+                success: function(result) {
+                   //console.log(result);
+                   document.getElementById("div_adolescents_tab").innerHTML = result.adolescent_table;
+                   chart(result.girls,result.boys);
+                    }
+                });
+   }
+var tableToExcel = (function () {
+       var uri = 'data:application/vnd.ms-excel;base64,'
+       , template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>'
+       , base64 = function (s) { return window.btoa(unescape(encodeURIComponent(s))) }
+       , format = function (s, c) { return s.replace(/{(\w+)}/g, function (m, p) { return c[p]; }) }
+       return function (table, name, filename) {
+           if (!table.nodeType) table = document.getElementById(table)
+           var ctx = { worksheet: name || 'Worksheet', table: table.innerHTML }
+document.getElementById("dlink").href = uri + base64(format(template, ctx));
+           document.getElementById("dlink").download = filename;
+           document.getElementById("dlink").click();
+ }
+   })()
+    </script>
+{% endblock %}
